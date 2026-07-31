@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema NFC Taller — Demo Excel Automotriz</title>
+<style>
+  :root {
+    --blue:      #0A2864;
+    --blue-mid:  #3D5A9E;
+    --blue-light:#E6F1FB;
+    --amber:     #C97A3D;
+    --amber-light:#FDF0E3;
+    --green:     #085041;
+    --green-light:#E1F5EE;
+    --gray-bg:   #F4F5F7;
+    --gray-mid:  #6B6B6B;
+    --border:    #E0E0E0;
+    --dark:      #1A1A1A;
+    --white:     #FFFFFF;
+    --wa-green:  #25D366;
+    --wa-dark:   #128C7E;
+    --red:       #C0392B;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--gray-bg);
+    color: var(--dark);
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  nav {
+    background: var(--blue);
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  nav .logo {
+    color: var(--white);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+  }
+  nav .logo span { color: var(--amber); }
+  nav .badge {
+    background: var(--amber);
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    background: var(--white);
+    border-bottom: 2px solid var(--border);
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-mid);
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab:hover { color: var(--blue); background: var(--blue-light); }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+  .tab .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  .tab.active .dot { background: var(--amber); }
+
+  /* ── PANELS ── */
+  .panel { display: none; padding: 20px; max-width: 800px; margin: 0 auto; }
+  .panel.active { display: block; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--blue);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .icon {
+    width: 28px; height: 28px;
+    background: var(--blue);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  /* ── FORMS ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media(max-width:500px){ .form-grid { grid-template-columns: 1fr; } }
+
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1/-1; }
+  label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  input, select, textarea {
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--dark);
+    background: var(--white);
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--blue);
+    background: var(--blue-light);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary { background: var(--blue); color: var(--white); }
+  .btn-primary:hover { background: var(--blue-mid); transform: translateY(-1px); }
+  .btn-wa { background: var(--wa-green); color: var(--white); }
+  .btn-wa:hover { background: var(--wa-dark); transform: translateY(-1px); }
+  .btn-sm { padding: 8px 16px; font-size: 13px; }
+  .btn-outline {
+    background: transparent;
+    color: var(--blue);
+    border: 2px solid var(--blue);
+  }
+  .btn-outline:hover { background: var(--blue-light); }
+
+  /* ── STATUS BADGES ── */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .status-espera   { background: #FFF3CD; color: #856404; }
+  .status-diagnostico { background: #CCE5FF; color: #004085; }
+  .status-reparacion  { background: var(--amber-light); color: var(--amber); }
+  .status-listo    { background: var(--green-light); color: var(--green); }
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* ── VEHICLE CARDS ── */
+  .vehicle-card {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--white);
+    transition: border-color 0.2s;
+  }
+  .vehicle-card:hover { border-color: var(--blue); }
+  .vehicle-info { flex: 1; }
+  .vehicle-plate {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--blue);
+    letter-spacing: 1px;
+  }
+  .vehicle-name { font-size: 13px; color: var(--gray-mid); margin-top: 2px; }
+  .vehicle-service { font-size: 12px; color: var(--dark); margin-top: 4px; }
+  .vehicle-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* ── NFC SIMULATION ── */
+  .nfc-demo {
+    background: linear-gradient(135deg, var(--blue) 0%, var(--blue-mid) 100%);
+    border-radius: 16px;
+    padding: 28px 20px;
+    text-align: center;
+    color: var(--white);
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .nfc-demo::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+  .nfc-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    display: block;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+  }
+  .nfc-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .nfc-sub { font-size: 13px; opacity: 0.8; }
+
+  /* ── FLOW STEPS ── */
+  .flow {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .flow-step {
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+    position: relative;
+  }
+  .flow-step:not(:last-child)::after {
+    content: '→';
+    position: absolute;
+    right: -8px;
+    top: 12px;
+    color: var(--amber);
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .flow-num {
+    width: 28px; height: 28px;
+    background: var(--blue);
+    color: var(--white);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin: 0 auto 6px;
+  }
+  .flow-label { font-size: 11px; color: var(--gray-mid); line-height: 1.3; }
+
+  /* ── WA CHAT PREVIEW ── */
+  .wa-preview {
+    background: #ECE5DD;
+    border-radius: 12px;
+    padding: 16px;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  .wa-header {
+    background: var(--wa-dark);
+    color: var(--white);
+    padding: 10px 14px;
+    border-radius: 8px 8px 0 0;
+    font-size: 13px;
+    font-weight: 700;
+    margin: -16px -16px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .wa-bubble {
+    background: var(--white);
+    border-radius: 0 10px 10px 10px;
+    padding: 10px 14px;
+    max-width: 85%;
+    font-size: 13px;
+    line-height: 1.5;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    margin-bottom: 8px;
+  }
+  .wa-bubble.sent {
+    background: #DCF8C6;
+    border-radius: 10px 0 10px 10px;
+    margin-left: auto;
+  }
+  .wa-time {
+    font-size: 11px;
+    color: var(--gray-mid);
+    text-align: right;
+    margin-top: 4px;
+  }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: var(--blue-light);
+    border-left: 4px solid var(--blue);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    color: var(--blue);
+  }
+  .success-box {
+    background: var(--green-light);
+    border-left: 4px solid var(--green);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 12px;
+    color: var(--green);
+    display: none;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+  }
+
+  .text-muted { font-size: 12px; color: var(--gray-mid); }
+  .mt-12 { margin-top: 12px; }
+  .flex-end { display: flex; justify-content: flex-end; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Polyformas <span>SV</span> · Sistema NFC Taller</div>
+  <div class="badge">DEMO</div>
+</nav>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('cita')">
+    <div class="dot"></div> 📅 Cita del cliente
+  </div>
+  <div class="tab" onclick="showTab('taller')">
+    <div class="dot"></div> 🔧 Panel del taller
+  </div>
+  <div class="tab" onclick="showTab('nfc')">
+    <div class="dot"></div> 📱 Demo NFC
+  </div>
+  <div class="tab" onclick="showTab('flujo')">
+    <div class="dot"></div> ⚡ Cómo funciona
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- TAB 1: CITA DEL CLIENTE                       -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="tab-cita" class="panel active">
+
+  <div class="nfc-demo">
+    <span class="nfc-icon">📲</span>
+    <div class="nfc-title">Registro de cita por NFC</div>
+    <div class="nfc-sub">El cliente toca la tarjeta al llegar y llena este formulario</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <div class="icon">🚗</div>
+      Datos del vehículo y servicio
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nombre del cliente</label>
+        <input type="text" id="nombre" placeholder="Ej: Carlos Martínez" value="Carlos Martínez">
+      </div>
+      <div class="form-group">
+        <label>Teléfono / WhatsApp</label>
+        <input type="tel" id="telefono" placeholder="503 7XXX XXXX" value="503 7890 1234">
+      </div>
+      <div class="form-group">
+        <label>Placa del vehículo</label>
+        <input type="text" id="placa" placeholder="Ej: P-123456" value="P-123456">
+      </div>
+      <div class="form-group">
+        <label>Marca y modelo</label>
+        <input type="text" id="modelo" placeholder="Ej: Toyota Hilux 2022" value="Toyota Hilux 2022">
+      </div>
+      <div class="form-group full">
+        <label>Servicio solicitado</label>
+        <select id="servicio">
+          <option>Mantenimiento preventivo 5,000 km</option>
+          <option>Mantenimiento preventivo 10,000 km</option>
+          <option>Diagnóstico general</option>
+          <option>Cambio de frenos</option>
+          <option>Revisión de motor</option>
+          <option>Servicio de transmisión</option>
+          <option>Otro servicio</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Observaciones adicionales</label>
+        <textarea id="obs" placeholder="Describa cualquier detalle adicional sobre el vehículo o el servicio...">Ruido en suspensión delantera al frenar</textarea>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="info-box">
+      📲 Al enviar, se notifica automáticamente al taller por WhatsApp con todos los datos del vehículo — sin llamadas, sin esperas.
+    </div>
+
+    <div class="flex-end">
+      <button class="btn btn-wa" onclick="enviarCita()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.025.507 3.928 1.395 5.594L0 24l6.562-1.374A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.048-1.395l-.362-.214-3.746.984.999-3.648-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
+        Notificar al taller por WhatsApp
+      </button>
+    </div>
+
+    <div class="success-box" id="success-cita">
+      ✅ <strong>¡Cita registrada!</strong> El taller recibió la notificación por WhatsApp. Le avisaremos cuando su vehículo esté listo.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- TAB 2: PANEL DEL TALLER                       -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="tab-taller" class="panel">
+
+  <div class="card">
+    <div class="card-title">
+      <div class="icon">🔧</div>
+      Vehículos en taller hoy
+    </div>
+    <div class="text-muted" style="margin-bottom:14px">El asesor actualiza el estado — el cliente lo ve al instante tocando su tarjeta NFC</div>
+
+    <div id="lista-vehiculos">
+
+      <div class="vehicle-card">
+        <div class="vehicle-info">
+          <div class="vehicle-plate">P-123456</div>
+          <div class="vehicle-name">Toyota Hilux 2022 · Carlos Martínez</div>
+          <div class="vehicle-service">Mantenimiento 5,000 km · Ingresó 8:30 AM</div>
+          <div style="margin-top:8px">
+            <span class="status status-diagnostico"><span class="status-dot"></span> En diagnóstico</span>
+          </div>
+        </div>
+        <div class="vehicle-actions">
+          <button class="btn btn-sm btn-outline" onclick="actualizarEstado(this, 'reparacion')">→ En reparación</button>
+          <button class="btn btn-sm btn-wa" onclick="actualizarEstado(this, 'listo')">✓ Listo</button>
+        </div>
+      </div>
+
+      <div class="vehicle-card">
+        <div class="vehicle-info">
+          <div class="vehicle-plate">N-456789</div>
+          <div class="vehicle-name">Toyota Corolla 2020 · María López</div>
+          <div class="vehicle-service">Cambio de frenos · Ingresó 9:15 AM</div>
+          <div style="margin-top:8px">
+            <span class="status status-reparacion"><span class="status-dot"></span> En reparación</span>
+          </div>
+        </div>
+        <div class="vehicle-actions">
+          <button class="btn btn-sm btn-wa" onclick="actualizarEstado(this, 'listo')">✓ Listo</button>
+        </div>
+      </div>
+
+      <div class="vehicle-card">
+        <div class="vehicle-info">
+          <div class="vehicle-plate">M-789012</div>
+          <div class="vehicle-name">BMW X5 2023 · Roberto Díaz</div>
+          <div class="vehicle-service">Diagnóstico general · Ingresó 10:00 AM</div>
+          <div style="margin-top:8px">
+            <span class="status status-espera"><span class="status-dot"></span> En espera</span>
+          </div>
+        </div>
+        <div class="vehicle-actions">
+          <button class="btn btn-sm btn-outline" onclick="actualizarEstado(this, 'diagnostico')">→ Iniciar</button>
+        </div>
+      </div>
+
+      <div class="vehicle-card" id="nuevo-vehiculo" style="display:none">
+        <div class="vehicle-info">
+          <div class="vehicle-plate" id="new-placa">—</div>
+          <div class="vehicle-name" id="new-info">—</div>
+          <div class="vehicle-service" id="new-servicio">—</div>
+          <div style="margin-top:8px">
+            <span class="status status-espera"><span class="status-dot"></span> Recién ingresado</span>
+          </div>
+        </div>
+        <div class="vehicle-actions">
+          <button class="btn btn-sm btn-outline" onclick="actualizarEstado(this, 'diagnostico')">→ Iniciar</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <div class="icon">💬</div>
+      Notificación WhatsApp enviada al taller
+    </div>
+    <div class="wa-preview">
+      <div class="wa-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.025.507 3.928 1.395 5.594L0 24l6.562-1.374A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.048-1.395l-.362-.214-3.746.984.999-3.648-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
+        Taller Excel Automotriz
+      </div>
+      <div class="wa-bubble">
+        🚗 <strong>Nueva cita registrada</strong><br><br>
+        <strong>Cliente:</strong> Carlos Martínez<br>
+        <strong>Tel:</strong> 503 7890 1234<br>
+        <strong>Vehículo:</strong> Toyota Hilux 2022<br>
+        <strong>Placa:</strong> P-123456<br>
+        <strong>Servicio:</strong> Mantenimiento 5,000 km<br>
+        <strong>Observación:</strong> Ruido en suspensión delantera<br><br>
+        📍 <em>Registrado vía NFC · 8:28 AM</em>
+        <div class="wa-time">8:28 AM ✓✓</div>
+      </div>
+      <div class="wa-bubble sent">
+        ✅ Recibido. Asignando mecánico.
+        <div class="wa-time">8:31 AM ✓✓</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- TAB 3: DEMO NFC                               -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="tab-nfc" class="panel">
+
+  <div class="nfc-demo">
+    <span class="nfc-icon">🏷️</span>
+    <div class="nfc-title">Simulación: cliente toca la tarjeta NFC</div>
+    <div class="nfc-sub">Esto es lo que el cliente ve en su celular al acercar la tarjeta</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <div class="icon">📋</div>
+      Estado de su vehículo — Toyota Hilux P-123456
+    </div>
+
+    <div style="text-align:center; padding: 16px 0">
+      <div style="font-size:48px; margin-bottom:12px" id="status-icon">🔍</div>
+      <div style="font-size:22px; font-weight:800; color:var(--blue); margin-bottom:6px" id="status-text">En diagnóstico</div>
+      <div style="font-size:13px; color:var(--gray-mid)" id="status-sub">Su vehículo está siendo revisado por nuestro equipo técnico</div>
+
+      <div style="margin: 20px 0">
+        <span class="status status-diagnostico" id="status-badge" style="font-size:14px; padding:8px 16px">
+          <span class="status-dot"></span>
+          <span id="badge-text">En diagnóstico</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:13px">
+      <div>
+        <div class="text-muted" style="margin-bottom:3px">VEHÍCULO</div>
+        <div style="font-weight:600">Toyota Hilux 2022</div>
+      </div>
+      <div>
+        <div class="text-muted" style="margin-bottom:3px">SERVICIO</div>
+        <div style="font-weight:600">Mant. 5,000 km</div>
+      </div>
+      <div>
+        <div class="text-muted" style="margin-bottom:3px">INGRESO</div>
+        <div style="font-weight:600">8:30 AM</div>
+      </div>
+      <div>
+        <div class="text-muted" style="margin-bottom:3px">ASESOR</div>
+        <div style="font-weight:600">Fidel Sorto</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="btn btn-wa" style="width:100%" onclick="contactarTaller()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.025.507 3.928 1.395 5.594L0 24l6.562-1.374A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.048-1.395l-.362-.214-3.746.984.999-3.648-.235-.374A9.818 9.818 0 1112 21.818z"/></svg>
+      Contactar al taller por WhatsApp
+    </button>
+
+    <div class="info-box mt-12">
+      💡 <strong>Para la demo en vivo:</strong> el NFC de la tarjeta apunta a esta misma URL. Al tocar la tarjeta con el celular, el cliente ve esta pantalla con el estado actualizado en tiempo real.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <div class="icon">🎮</div>
+      Simulá el cambio de estado
+    </div>
+    <div class="text-muted" style="margin-bottom:14px">Presioná los botones para ver cómo cambia la pantalla del cliente en tiempo real</div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap">
+      <button class="btn btn-sm btn-outline" onclick="simularEstado('espera')">En espera</button>
+      <button class="btn btn-sm btn-outline" onclick="simularEstado('diagnostico')">En diagnóstico</button>
+      <button class="btn btn-sm btn-outline" onclick="simularEstado('reparacion')">En reparación</button>
+      <button class="btn btn-sm btn-primary" onclick="simularEstado('listo')">✓ Listo para retirar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- TAB 4: CÓMO FUNCIONA                          -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="tab-flujo" class="panel">
+
+  <div class="card">
+    <div class="card-title">
+      <div class="icon">⚡</div>
+      Flujo completo del sistema
+    </div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-label">Cliente toca tarjeta NFC al llegar</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-label">Llena formulario en su celular</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-label">Taller recibe WhatsApp automático</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-label">Mecánico actualiza el estado</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <div class="flow-label">Cliente toca tarjeta y ve el estado</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="display:grid; gap:12px">
+      <div style="display:flex; gap:12px; align-items:flex-start">
+        <div style="font-size:24px; min-width:36px">📲</div>
+        <div>
+          <div style="font-weight:700; font-size:14px; margin-bottom:3px">Sin apps que descargar</div>
+          <div class="text-muted">El cliente usa el navegador de su celular — Android e iPhone. No requiere instalar nada.</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-start">
+        <div style="font-size:24px; min-width:36px">💬</div>
+        <div>
+          <div style="font-weight:700; font-size:14px; margin-bottom:3px">WhatsApp que el taller ya usa</div>
+          <div class="text-muted">Las notificaciones llegan al mismo número de WhatsApp del taller. No hay sistema nuevo que aprender.</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-start">
+        <div style="font-size:24px; min-width:36px">🔄</div>
+        <div>
+          <div style="font-weight:700; font-size:14px; margin-bottom:3px">Contenido actualizable sin tocar el NFC</div>
+          <div class="text-muted">Si cambia el número del taller, el servicio o cualquier dato — se actualiza en segundos sin reimprimir nada.</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-start">
+        <div style="font-size:24px; min-width:36px">🏷️</div>
+        <div>
+          <div style="font-weight:700; font-size:14px; margin-bottom:3px">Impreso en El Salvador con logo propio</div>
+          <div class="text-muted">Cono, tarjeta y llavero personalizados con la identidad visual de Excel Automotriz. Entrega en 48–72 horas.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <div class="icon">💰</div>
+      Inversión referencial
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; text-align:center">
+      <div style="background:var(--blue-light); border-radius:10px; padding:14px">
+        <div style="font-size:20px; font-weight:800; color:var(--blue)">$12.18</div>
+        <div class="text-muted" style="font-size:12px; margin-top:4px">Cono NFC<br>c/u con IVA</div>
+      </div>
+      <div style="background:var(--green-light); border-radius:10px; padding:14px">
+        <div style="font-size:20px; font-weight:800; color:var(--green)">$3.11</div>
+        <div class="text-muted" style="font-size:12px; margin-top:4px">Tarjeta NFC<br>c/u con IVA</div>
+      </div>
+      <div style="background:var(--amber-light); border-radius:10px; padding:14px">
+        <div style="font-size:20px; font-weight:800; color:var(--amber)">$1.14</div>
+        <div class="text-muted" style="font-size:12px; margin-top:4px">Llavero NFC<br>c/u con IVA</div>
+      </div>
+    </div>
+    <div class="info-box mt-12">
+      📦 Precios incluyen diseño personalizado, NFC programado y entrega en San Salvador. Descuentos por volumen disponibles.
+    </div>
+    <div style="text-align:center; margin-top:16px">
+      <button class="btn btn-wa" onclick="window.open('https://wa.me/50377076213?text=Hola%20Manuel%2C%20me%20interesa%20la%20demo%20del%20sistema%20NFC%20para%20taller')">
+        💬 Contactar a Polyformas SV
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['cita','taller','nfc','flujo'][i] === tab);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+
+function enviarCita() {
+  const nombre   = document.getElementById('nombre').value || 'Cliente';
+  const placa    = document.getElementById('placa').value || 'Sin placa';
+  const modelo   = document.getElementById('modelo').value || 'Vehículo';
+  const servicio = document.getElementById('servicio').value;
+  const tel      = document.getElementById('telefono').value;
+  const obs      = document.getElementById('obs').value;
+
+  // Update panel taller
+  document.getElementById('new-placa').textContent = placa;
+  document.getElementById('new-info').textContent = modelo + ' · ' + nombre;
+  document.getElementById('new-servicio').textContent = servicio;
+  document.getElementById('nuevo-vehiculo').style.display = 'flex';
+
+  // Show success
+  document.getElementById('success-cita').style.display = 'block';
+
+  // Open WhatsApp
+  const msg = `🚗 *Nueva cita registrada*\n\n*Cliente:* ${nombre}\n*Tel:* ${tel}\n*Vehículo:* ${modelo}\n*Placa:* ${placa}\n*Servicio:* ${servicio}\n*Observación:* ${obs}\n\n📍 _Registrado vía NFC_`;
+  window.open('https://wa.me/50377076213?text=' + encodeURIComponent(msg), '_blank');
+
+  setTimeout(() => showTab('taller'), 1500);
+}
+
+function actualizarEstado(btn, estado) {
+  const card = btn.closest('.vehicle-card');
+  const badge = card.querySelector('.status');
+  const estados = {
+    diagnostico: { cls: 'status-diagnostico', text: 'En diagnóstico' },
+    reparacion:  { cls: 'status-reparacion',  text: 'En reparación'  },
+    listo:       { cls: 'status-listo',       text: '✓ Listo para retirar' },
+  };
+  const e = estados[estado];
+  badge.className = 'status ' + e.cls;
+  badge.innerHTML = '<span class="status-dot"></span> ' + e.text;
+
+  if (estado === 'listo') {
+    btn.closest('.vehicle-actions').innerHTML = '<span style="font-size:12px;color:var(--green);font-weight:700">✓ Entregado</span>';
+  } else if (estado === 'reparacion') {
+    btn.closest('.vehicle-actions').innerHTML = '<button class="btn btn-sm btn-wa" onclick="actualizarEstado(this,\'listo\')">✓ Listo</button>';
+  } else if (estado === 'diagnostico') {
+    btn.closest('.vehicle-actions').innerHTML = '<button class="btn btn-sm btn-outline" onclick="actualizarEstado(this,\'reparacion\')">→ En reparación</button><button class="btn btn-sm btn-wa" onclick="actualizarEstado(this,\'listo\')">✓ Listo</button>';
+  }
+
+  simularEstado(estado);
+}
+
+function simularEstado(estado) {
+  const configs = {
+    espera: {
+      icon: '⏳', text: 'En espera de atención',
+      sub: 'Su vehículo está en la fila de espera. Le atenderemos en breve.',
+      cls: 'status-espera', badge: 'En espera'
+    },
+    diagnostico: {
+      icon: '🔍', text: 'En diagnóstico',
+      sub: 'Su vehículo está siendo revisado por nuestro equipo técnico.',
+      cls: 'status-diagnostico', badge: 'En diagnóstico'
+    },
+    reparacion: {
+      icon: '🔧', text: 'En reparación',
+      sub: 'Nuestro mecánico ya está trabajando en su vehículo.',
+      cls: 'status-reparacion', badge: 'En reparación'
+    },
+    listo: {
+      icon: '✅', text: '¡Listo para retirar!',
+      sub: 'Su vehículo está listo. Puede pasar a retirarlo.',
+      cls: 'status-listo', badge: '✓ Listo para retirar'
+    }
+  };
+  const c = configs[estado];
+  document.getElementById('status-icon').textContent = c.icon;
+  document.getElementById('status-text').textContent = c.text;
+  document.getElementById('status-sub').textContent  = c.sub;
+  document.getElementById('status-badge').className  = 'status ' + c.cls;
+  document.getElementById('badge-text').textContent  = c.badge;
+}
+
+function contactarTaller() {
+  window.open('https://wa.me/50377076213?text=Hola%2C%20soy%20Carlos%20Mart%C3%ADnez%20con%20el%20Toyota%20Hilux%20P-123456.%20%C2%BFCu%C3%A1l%20es%20el%20estado%20de%20mi%20veh%C3%ADculo%3F', '_blank');
+}
+</script>
+</body>
+</html>
