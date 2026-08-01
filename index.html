@@ -913,7 +913,13 @@ function contactarTaller() {
   window.open('https://wa.me/50377076213?text=' + encodeURIComponent(msg), '_blank');
 }
 
-document.addEventListener('DOMContentLoaded', cargarEstadoCliente);
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('placa')) {
+    showTab('nfc');
+  }
+  cargarEstadoCliente();
+});
 </script>
 </body>
 </html>
