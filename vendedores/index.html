@@ -202,6 +202,9 @@ function renderContenido(v) {
   if (tipo === 'video') {
     return `<a class="contenido-texto" style="color:var(--blue-mid); font-weight:700" href="${v.contenido}" target="_blank">▶ Ver video</a>`;
   }
+  if (tipo === 'link') {
+    return `<a class="contenido-texto" style="color:var(--blue-mid); font-weight:700" href="${v.contenido}" target="_blank">🛍️ Ver catálogo</a>`;
+  }
   return `<div class="contenido-texto">Sin contenido cargado por ahora.</div>`;
 }
 
