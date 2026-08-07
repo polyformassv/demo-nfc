@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contacto — Polyformas SV</title>
+<style>
+  :root {
+    --blue: #0A2864;
+    --blue-mid: #3D5A9E;
+    --blue-light: #E6F1FB;
+    --amber: #C97A3D;
+    --gray-bg: #F4F5F7;
+    --gray-mid: #6B6B6B;
+    --border: #E0E0E0;
+    --dark: #1A1A1A;
+    --white: #FFFFFF;
+    --wa-green: #25D366;
+    --wa-dark: #128C7E;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--gray-bg);
+    color: var(--dark);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 28px 22px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .logo-badge {
+    width: 56px; height: 56px;
+    background: var(--blue);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px;
+    font-size: 26px;
+  }
+  .vendedor-nombre {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--blue);
+    margin-bottom: 2px;
+  }
+  .sub {
+    font-size: 13px;
+    color: var(--gray-mid);
+    margin-bottom: 22px;
+  }
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px 16px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: transform 0.15s;
+    text-decoration: none;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-vendedor { background: var(--wa-green); color: var(--white); }
+  .btn-contenido { background: var(--amber); color: var(--white); }
+
+  .contenido-box {
+    display: none;
+    text-align: left;
+    background: var(--blue-light);
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 6px;
+    margin-bottom: 12px;
+  }
+  .contenido-titulo {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--blue);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 8px;
+  }
+  .contenido-texto {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--dark);
+    white-space: pre-wrap;
+  }
+  .contenido-imagen {
+    width: 100%;
+    border-radius: 8px;
+    display: block;
+    margin-top: 4px;
+  }
+  .footer {
+    font-size: 11px;
+    color: var(--gray-mid);
+    margin-top: 8px;
+  }
+  .estado {
+    font-size: 13px;
+    color: var(--gray-mid);
+    padding: 30px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="card" id="card">
+  <div class="estado" id="estado">Cargando…</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   CONFIG — pegar acá la URL de tu Apps Script
+   (termina en /exec)
+   ══════════════════════════════════════════════ */
+const CONFIG = {
+  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycby0I-MWjL6XWgH5RQw0jRMCyE92_pexuRDyhagQMQm5BpBGhYJVKMtU8IxkiwFfbDWGSA/exec'
+};
+
+async function cargar() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  const card = document.getElementById('card');
+
+  if (!id) {
+    card.innerHTML = '<div class="estado">Falta el identificador del vendedor en el link (?id=...)</div>';
+    return;
+  }
+  if (!CONFIG.SCRIPT_URL || CONFIG.SCRIPT_URL.includes('PEGAR_AQUI')) {
+    card.innerHTML = '<div class="estado">Falta configurar el backend (CONFIG.SCRIPT_URL).</div>';
+    return;
+  }
+
+  try {
+    const res = await fetch(CONFIG.SCRIPT_URL + '?' + new URLSearchParams({ id }));
+    const data = await res.json();
+
+    if (data.error) {
+      card.innerHTML = `<div class="estado">${data.error === 'Vendedor no encontrado' ? 'No encontramos este contacto.' : 'Ocurrió un error al cargar.'}</div>`;
+      return;
+    }
+
+    renderCard(data);
+  } catch (err) {
+    console.error(err);
+    card.innerHTML = '<div class="estado">No se pudo cargar. Revisá tu conexión e intentá de nuevo.</div>';
+  }
+}
+
+function renderCard(v) {
+  const card = document.getElementById('card');
+
+  card.innerHTML = `
+    <div class="logo-badge">🚗</div>
+    <div class="vendedor-nombre">${v.nombre}</div>
+    <div class="sub">${v.subtitulo || ''}</div>
+
+    <a class="btn btn-vendedor" href="https://wa.me/${v.whatsapp_vendedor}" target="_blank">
+      💬 Escribirle a ${v.nombre.split(' ')[0]}
+    </a>
+
+    <button class="btn btn-contenido" onclick="toggleContenido()">
+      🎁 Ver contenido actualizado
+    </button>
+
+    <div class="contenido-box" id="contenido-box">
+      <div class="contenido-titulo">${v.titulo_contenido || 'Novedades'}</div>
+      <div id="contenido-cuerpo"></div>
+    </div>
+
+    <div class="footer">Polyformas SV</div>
+  `;
+
+  document.getElementById('contenido-cuerpo').innerHTML = renderContenido(v);
+}
+
+function renderContenido(v) {
+  const tipo = (v.tipo_contenido || '').toLowerCase();
+
+  if (tipo === 'texto') {
+    return `<div class="contenido-texto">${escapeHtml(v.contenido || '')}</div>`;
+  }
+  if (tipo === 'imagen') {
+    return `<img class="contenido-imagen" src="${v.contenido}" alt="Contenido" onerror="this.outerHTML='<div class=\\'contenido-texto\\'>No se pudo cargar la imagen.</div>'">`;
+  }
+  if (tipo === 'video') {
+    return `<a class="contenido-texto" style="color:var(--blue-mid); font-weight:700" href="${v.contenido}" target="_blank">▶ Ver video</a>`;
+  }
+  if (tipo === 'link') {
+    return `<a class="contenido-texto" style="color:var(--blue-mid); font-weight:700" href="${v.contenido}" target="_blank">🛍️ Ver catálogo</a>`;
+  }
+  return `<div class="contenido-texto">Sin contenido cargado por ahora.</div>`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function toggleContenido() {
+  const box = document.getElementById('contenido-box');
+  box.style.display = box.style.display === 'block' ? 'none' : 'block';
+}
+
+document.addEventListener('DOMContentLoaded', cargar);
+</script>
+</body>
+</html>
