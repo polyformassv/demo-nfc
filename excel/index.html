@@ -357,6 +357,21 @@
     color: var(--green);
     display: none;
   }
+  .error-box {
+    background: #FDECEA;
+    border-left: 4px solid var(--red);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    color: var(--red);
+    display: none;
+  }
+  .input-error {
+    border-color: var(--red) !important;
+    background: #FDECEA !important;
+  }
 
   /* ── DIVIDER ── */
   .divider {
@@ -449,6 +464,10 @@
 
     <div class="info-box">
       📲 Al enviar, se notifica automáticamente al taller por WhatsApp con todos los datos del vehículo — sin llamadas, sin esperas.
+    </div>
+
+    <div class="error-box" id="error-cita">
+      ⚠️ Completá al menos el <strong>nombre</strong> y la <strong>placa</strong> antes de continuar.
     </div>
 
     <div class="flex-end">
@@ -741,8 +760,25 @@ async function apiPost(body) {
 /* ── Tab: Cita del cliente ── */
 
 async function enviarCita() {
-  const nombre   = document.getElementById('nombre').value || 'Cliente';
-  const placa    = (document.getElementById('placa').value || 'SIN-PLACA').trim().toUpperCase();
+  const inputNombre = document.getElementById('nombre');
+  const inputPlaca  = document.getElementById('placa');
+
+  const nombre = inputNombre.value.trim();
+  const placa  = inputPlaca.value.trim().toUpperCase();
+
+  // Limpiar marcas de error previas
+  inputNombre.classList.remove('input-error');
+  inputPlaca.classList.remove('input-error');
+  document.getElementById('error-cita').style.display = 'none';
+
+  if (!nombre || !placa) {
+    if (!nombre) inputNombre.classList.add('input-error');
+    if (!placa) inputPlaca.classList.add('input-error');
+    document.getElementById('error-cita').style.display = 'block';
+    (!nombre ? inputNombre : inputPlaca).focus();
+    return;
+  }
+
   const modelo   = document.getElementById('modelo').value || 'Vehículo';
   const servicio = document.getElementById('servicio').value;
   const tel      = document.getElementById('telefono').value;
@@ -921,6 +957,12 @@ document.addEventListener('DOMContentLoaded', () => {
     showTab('taller');
   }
   cargarEstadoCliente();
+
+  ['nombre', 'placa'].forEach(id => {
+    document.getElementById(id).addEventListener('input', (e) => {
+      e.target.classList.remove('input-error');
+    });
+  });
 });
 </script>
 </body>
