@@ -213,7 +213,7 @@ function renderContenido(v) {
   }
   if (tipo === 'link') {
     const etiqueta = v.titulo_contenido || 'Ver más';
-    return `<a class="contenido-texto" style="color:var(--blue-mid); font-weight:700" href="${v.contenido}" target="_blank" rel="noopener">🔗 ${escapeHtml(etiqueta)}</a>`;
+    return `<a class="contenido-texto" style="color:var(--blue-mid); font-weight:700" href="${v.contenido}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(etiqueta)}</a>`;
   }
   return `<div class="contenido-texto">Sin contenido cargado por ahora.</div>`;
 }
