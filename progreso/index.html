@@ -213,9 +213,32 @@ function renderContenido(v) {
   }
   if (tipo === 'link') {
     const etiqueta = v.titulo_contenido || 'Ver más';
+    if ((v.contenido || '').includes('facebook.com')) {
+      return `<button class="contenido-texto" style="color:var(--blue-mid); font-weight:700; background:none; border:none; padding:0; text-align:left; cursor:pointer; font-family:inherit" onclick="abrirFacebook('${v.contenido.replace(/'/g, "\\'")}')">🔗 ${escapeHtml(etiqueta)}</button>`;
+    }
     return `<a class="contenido-texto" style="color:var(--blue-mid); font-weight:700" href="${v.contenido}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(etiqueta)}</a>`;
   }
   return `<div class="contenido-texto">Sin contenido cargado por ahora.</div>`;
+}
+
+// Intenta abrir el link dentro de la app de Facebook (ya logueada ahí).
+// Si la app no está instalada, después de un momento cae automáticamente
+// al link normal del navegador.
+function abrirFacebook(url) {
+  const deepLink = 'fb://facewebmodal/f?href=' + encodeURIComponent(url);
+  let yaAbrio = false;
+
+  const marcarAbierto = () => { yaAbrio = true; };
+  document.addEventListener('visibilitychange', marcarAbierto, { once: true });
+  window.addEventListener('pagehide', marcarAbierto, { once: true });
+
+  window.location.href = deepLink;
+
+  setTimeout(() => {
+    if (!yaAbrio) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  }, 900);
 }
 
 function escapeHtml(str) {
