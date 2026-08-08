@@ -184,14 +184,14 @@ function renderCard(v) {
       🎁 Ver contenido actualizado
     </button>
 
-    <a class="btn btn-polyformas" href="https://wa.me/50377076213" target="_blank">
-      💬 Contactar a Polyformas SV
-    </a>
-
     <div class="contenido-box" id="contenido-box">
       <div class="contenido-titulo">${v.titulo_contenido || 'Novedades'}</div>
       <div id="contenido-cuerpo"></div>
     </div>
+
+    <a class="btn btn-polyformas" href="https://wa.me/50377076213" target="_blank">
+      💬 Contactar a Polyformas SV
+    </a>
 
     <div class="footer">Polyformas SV</div>
   `;
@@ -212,7 +212,8 @@ function renderContenido(v) {
     return `<a class="contenido-texto" style="color:var(--blue-mid); font-weight:700" href="${v.contenido}" target="_blank">▶ Ver video</a>`;
   }
   if (tipo === 'link') {
-    return `<a class="contenido-texto" style="color:var(--blue-mid); font-weight:700" href="${v.contenido}" target="_blank">🛍️ Ver catálogo</a>`;
+    const etiqueta = v.titulo_contenido || 'Ver más';
+    return `<a class="contenido-texto" style="color:var(--blue-mid); font-weight:700" href="${v.contenido}" target="_blank" rel="noopener">🔗 ${escapeHtml(etiqueta)}</a>`;
   }
   return `<div class="contenido-texto">Sin contenido cargado por ahora.</div>`;
 }
