@@ -90,6 +90,7 @@
     padding: 14px;
     margin-top: 6px;
     margin-bottom: 12px;
+    overflow-x: auto;
   }
   .contenido-titulo {
     font-size: 13px;
@@ -124,6 +125,7 @@
 </style>
 </head>
 <body>
+<div id="fb-root"></div>
 
 <div class="card" id="card">
   <div class="estado" id="estado">Cargando…</div>
@@ -132,10 +134,11 @@
 <script>
 /* ══════════════════════════════════════════════
    CONFIG — pegar acá la URL de tu Apps Script
-   (termina en /exec)
+   (termina en /exec) y tu App ID de Facebook
    ══════════════════════════════════════════════ */
 const CONFIG = {
-  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbylor2blJR_pnxw_1K0eqNbeACo8pjw_9WTINxp5crAAVoOo_sXaPocULjSJUNExDFy/exec'
+  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbylor2blJR_pnxw_1K0eqNbeACo8pjw_9WTINxp5crAAVoOo_sXaPocULjSJUNExDFy/exec',
+  FACEBOOK_APP_ID: '2067743860515287'
 };
 
 async function cargar() {
@@ -197,6 +200,10 @@ function renderCard(v) {
   `;
 
   document.getElementById('contenido-cuerpo').innerHTML = renderContenido(v);
+
+  if ((v.tipo_contenido || '').toLowerCase() === 'facebook') {
+    inicializarWidgetFacebook(v.contenido);
+  }
 }
 
 function renderContenido(v) {
@@ -213,32 +220,54 @@ function renderContenido(v) {
   }
   if (tipo === 'link') {
     const etiqueta = v.titulo_contenido || 'Ver más';
-    if ((v.contenido || '').includes('facebook.com')) {
-      return `<button class="contenido-texto" style="color:var(--blue-mid); font-weight:700; background:none; border:none; padding:0; text-align:left; cursor:pointer; font-family:inherit" onclick="abrirFacebook('${v.contenido.replace(/'/g, "\\'")}')">🔗 ${escapeHtml(etiqueta)}</button>`;
-    }
     return `<a class="contenido-texto" style="color:var(--blue-mid); font-weight:700" href="${v.contenido}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(etiqueta)}</a>`;
+  }
+  if (tipo === 'facebook') {
+    return `<div class="fb-page"
+              data-href="${v.contenido}"
+              data-tabs="timeline"
+              data-width="320"
+              data-height="400"
+              data-small-header="true"
+              data-adapt-container-width="true"
+              data-hide-cover="false"
+              data-show-facepile="false">
+            </div>`;
   }
   return `<div class="contenido-texto">Sin contenido cargado por ahora.</div>`;
 }
 
-// Intenta abrir el link dentro de la app de Facebook (ya logueada ahí).
-// Si la app no está instalada, después de un momento cae automáticamente
-// al link normal del navegador.
-function abrirFacebook(url) {
-  const deepLink = 'fb://facewebmodal/f?href=' + encodeURIComponent(url);
-  let yaAbrio = false;
+let sdkFacebookCargando = null;
 
-  const marcarAbierto = () => { yaAbrio = true; };
-  document.addEventListener('visibilitychange', marcarAbierto, { once: true });
-  window.addEventListener('pagehide', marcarAbierto, { once: true });
+function cargarSdkFacebook() {
+  if (window.FB) return Promise.resolve();
+  if (sdkFacebookCargando) return sdkFacebookCargando;
 
-  window.location.href = deepLink;
+  sdkFacebookCargando = new Promise((resolve) => {
+    window.fbAsyncInit = function () {
+      FB.init({ appId: CONFIG.FACEBOOK_APP_ID, xfbml: false, version: 'v19.0' });
+      resolve();
+    };
+    const script = document.createElement('script');
+    script.async = true;
+    script.defer = true;
+    script.crossOrigin = 'anonymous';
+    script.src = 'https://connect.facebook.net/es_LA/sdk.js';
+    document.body.appendChild(script);
+  });
 
-  setTimeout(() => {
-    if (!yaAbrio) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-  }, 900);
+  return sdkFacebookCargando;
+}
+
+function inicializarWidgetFacebook(url) {
+  if (!CONFIG.FACEBOOK_APP_ID || CONFIG.FACEBOOK_APP_ID.includes('PEGAR_AQUI')) {
+    document.getElementById('contenido-cuerpo').innerHTML =
+      '<div class="contenido-texto">Falta configurar CONFIG.FACEBOOK_APP_ID.</div>';
+    return;
+  }
+  cargarSdkFacebook().then(() => {
+    FB.XFBML.parse(document.getElementById('contenido-cuerpo'));
+  });
 }
 
 function escapeHtml(str) {
