@@ -85,6 +85,7 @@
     padding: 14px;
     margin-top: 6px;
     margin-bottom: 12px;
+    overflow-x: auto;
   }
   .contenido-titulo {
     font-size: 13px;
@@ -119,6 +120,7 @@
 </style>
 </head>
 <body>
+<div id="fb-root"></div>
 
 <div class="card" id="card">
   <div class="estado" id="estado">Cargando…</div>
@@ -127,10 +129,11 @@
 <script>
 /* ══════════════════════════════════════════════
    CONFIG — pegar acá la URL de tu Apps Script
-   (termina en /exec)
+   (termina en /exec) y tu App ID de Facebook
    ══════════════════════════════════════════════ */
 const CONFIG = {
-  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxglDU9dKrFgpCnsTYYoQxdL479wI_Vk_N-z4LC3pPrsJd7buLYaot2hIdZss6mLWC6_A/exec'
+  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxglDU9dKrFgpCnsTYYoQxdL479wI_Vk_N-z4LC3pPrsJd7buLYaot2hIdZss6mLWC6_A/exec',
+  FACEBOOK_APP_ID: '2067743860515287'
 };
 
 async function cargar() {
@@ -188,6 +191,10 @@ function renderCard(v) {
   `;
 
   document.getElementById('contenido-cuerpo').innerHTML = renderContenido(v);
+
+  if ((v.tipo_contenido || '').toLowerCase() === 'facebook') {
+    inicializarWidgetFacebook(v.contenido);
+  }
 }
 
 function renderContenido(v) {
@@ -205,7 +212,52 @@ function renderContenido(v) {
   if (tipo === 'link') {
     return `<a class="contenido-texto" style="color:var(--blue-mid); font-weight:700" href="${v.contenido}" target="_blank">🛍️ Ver catálogo</a>`;
   }
+  if (tipo === 'facebook') {
+    return `<div class="fb-page"
+              data-href="${v.contenido}"
+              data-tabs="timeline"
+              data-width="320"
+              data-height="400"
+              data-small-header="true"
+              data-adapt-container-width="true"
+              data-hide-cover="false"
+              data-show-facepile="false">
+            </div>`;
+  }
   return `<div class="contenido-texto">Sin contenido cargado por ahora.</div>`;
+}
+
+let sdkFacebookCargando = null;
+
+function cargarSdkFacebook() {
+  if (window.FB) return Promise.resolve();
+  if (sdkFacebookCargando) return sdkFacebookCargando;
+
+  sdkFacebookCargando = new Promise((resolve) => {
+    window.fbAsyncInit = function () {
+      FB.init({ appId: CONFIG.FACEBOOK_APP_ID, xfbml: false, version: 'v19.0' });
+      resolve();
+    };
+    const script = document.createElement('script');
+    script.async = true;
+    script.defer = true;
+    script.crossOrigin = 'anonymous';
+    script.src = 'https://connect.facebook.net/es_LA/sdk.js';
+    document.body.appendChild(script);
+  });
+
+  return sdkFacebookCargando;
+}
+
+function inicializarWidgetFacebook(url) {
+  if (!CONFIG.FACEBOOK_APP_ID || CONFIG.FACEBOOK_APP_ID.includes('PEGAR_AQUI')) {
+    document.getElementById('contenido-cuerpo').innerHTML =
+      '<div class="contenido-texto">Falta configurar CONFIG.FACEBOOK_APP_ID.</div>';
+    return;
+  }
+  cargarSdkFacebook().then(() => {
+    FB.XFBML.parse(document.getElementById('contenido-cuerpo'));
+  });
 }
 
 function escapeHtml(str) {
