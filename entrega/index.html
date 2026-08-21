@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entrega de tu vehículo — Polyformas SV</title>
+<style>
+  :root {
+    --blue: #0A2864;
+    --blue-mid: #3D5A9E;
+    --blue-light: #E6F1FB;
+    --amber: #C97A3D;
+    --gray-bg: #F4F5F7;
+    --gray-mid: #6B6B6B;
+    --border: #E0E0E0;
+    --dark: #1A1A1A;
+    --white: #FFFFFF;
+    --wa-green: #25D366;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--gray-bg);
+    color: var(--dark);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 24px 20px;
+    max-width: 460px;
+    width: 100%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+  .header-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .header-badge .icon {
+    width: 44px; height: 44px;
+    background: var(--blue);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .header-badge .titulo { font-size: 13px; font-weight: 700; color: var(--gray-mid); text-transform: uppercase; letter-spacing: 0.4px; }
+  .header-badge .sub { font-size: 18px; font-weight: 800; color: var(--blue); }
+
+  .galeria {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin-bottom: 18px;
+    border-radius: 10px;
+    scroll-snap-type: x mandatory;
+  }
+  .galeria img {
+    width: 100%;
+    min-width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    border-radius: 10px;
+    scroll-snap-align: start;
+    background: var(--gray-bg);
+  }
+
+  .video-box {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 18px;
+    background: var(--dark);
+  }
+  .video-box iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .info-item .label { font-size: 11px; font-weight: 700; color: var(--gray-mid); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; }
+  .info-item .value { font-size: 15px; font-weight: 600; color: var(--dark); }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  .vendedor-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--blue-light);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+  }
+  .vendedor-box .nombre { font-size: 13px; color: var(--gray-mid); }
+  .vendedor-box .nombre strong { color: var(--blue); font-size: 14px; display: block; }
+
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: var(--wa-green);
+    color: var(--white);
+    font-weight: 700;
+    font-size: 13px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .notas {
+    font-size: 13px;
+    color: var(--gray-mid);
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  .footer { text-align: center; font-size: 11px; color: var(--gray-mid); margin-top: 18px; }
+  .estado { font-size: 13px; color: var(--gray-mid); padding: 30px 0; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="card" id="card">
+  <div class="estado" id="estado">Cargando…</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   CONFIG — pegar acá la URL de tu Apps Script
+   (termina en /exec)
+   ══════════════════════════════════════════════ */
+const CONFIG = {
+  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxDDN4vs2su4H27qPHWnBRcUrzRBP9lHrrFEB06xzbR68KHYmjrAZdg9GkofV7CAs8/exec'
+};
+
+async function cargar() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  const card = document.getElementById('card');
+
+  if (!id) {
+    card.innerHTML = '<div class="estado">Falta el identificador en el link (?id=...)</div>';
+    return;
+  }
+  if (!CONFIG.SCRIPT_URL || CONFIG.SCRIPT_URL.includes('PEGAR_AQUI')) {
+    card.innerHTML = '<div class="estado">Falta configurar el backend (CONFIG.SCRIPT_URL).</div>';
+    return;
+  }
+
+  try {
+    const res = await fetch(CONFIG.SCRIPT_URL + '?' + new URLSearchParams({ id }));
+    const data = await res.json();
+
+    if (data.error) {
+      card.innerHTML = `<div class="estado">${data.error === 'Registro no encontrado' ? 'No encontramos esta entrega.' : 'Ocurrió un error al cargar.'}</div>`;
+      return;
+    }
+
+    renderCard(data);
+  } catch (err) {
+    console.error(err);
+    card.innerHTML = '<div class="estado">No se pudo cargar. Revisá tu conexión e intentá de nuevo.</div>';
+  }
+}
+
+function renderCard(v) {
+  const card = document.getElementById('card');
+
+  const fotos = [v.foto1, v.foto2, v.foto3, v.foto4, v.foto5].filter(f => f && f.trim());
+  const galeriaHtml = fotos.length
+    ? `<div class="galeria">${fotos.map(f => `<img src="${f}" alt="Foto del vehículo" onerror="this.style.display='none'">`).join('')}</div>`
+    : '';
+
+  card.innerHTML = `
+    <div class="header-badge">
+      <div class="icon">🚗</div>
+      <div>
+        <div class="titulo">Entrega de tu vehículo</div>
+        <div class="sub">${escapeHtml(v.nombre_cliente || '')}</div>
+      </div>
+    </div>
+
+    ${galeriaHtml}
+
+    ${renderVideo(v.video)}
+
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="label">Vehículo</div>
+        <div class="value">${escapeHtml(v.modelo_vehiculo || '—')}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">Placa</div>
+        <div class="value">${escapeHtml(v.placa || '—')}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">Fecha de entrega</div>
+        <div class="value">${escapeHtml(v.fecha_entrega || '—')}</div>
+      </div>
+    </div>
+
+    ${v.notas ? `<div class="divider"></div><div class="notas">${escapeHtml(v.notas)}</div>` : ''}
+
+    <div class="divider"></div>
+
+    <div class="vendedor-box">
+      <div class="nombre">Tu asesor de venta<strong>${escapeHtml(v.vendedor || '')}</strong></div>
+      ${v.whatsapp_vendedor ? `<a class="btn" href="https://wa.me/${v.whatsapp_vendedor}" target="_blank">💬 Escribir</a>` : ''}
+    </div>
+
+    <div class="footer">Polyformas SV</div>
+  `;
+}
+
+function renderVideo(url) {
+  if (!url || !url.trim()) return '';
+
+  // YouTube: cualquier formato común
+  const patronesYoutube = [
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/
+  ];
+  for (const p of patronesYoutube) {
+    const m = url.match(p);
+    if (m) {
+      return `<div class="video-box"><iframe src="https://www.youtube.com/embed/${m[1]}"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen></iframe></div>`;
+    }
+  }
+
+  // Google Drive: extraer el ID del archivo del link compartido
+  const patronDrive = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
+  const mDrive = url.match(patronDrive);
+  if (mDrive) {
+    return `<div class="video-box"><iframe src="https://drive.google.com/file/d/${mDrive[1]}/preview"
+                allow="autoplay" allowfullscreen></iframe></div>`;
+  }
+
+  // Si no coincide con ningún patrón conocido, no se muestra nada
+  return '';
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+document.addEventListener('DOMContentLoaded', cargar);
+</script>
+</body>
+</html>
