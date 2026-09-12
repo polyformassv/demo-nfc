@@ -841,17 +841,14 @@ function renderVehiculos(vehiculos) {
     const meta = ESTADOS_META[v.estado] || ESTADOS_META.espera;
     const hora = v.timestamp ? new Date(v.timestamp).toLocaleTimeString('es-SV', {hour:'2-digit', minute:'2-digit'}) : '';
 
-    let acciones = '';
-    if (v.estado === 'espera') {
-      acciones = `<button class="btn btn-sm btn-outline" onclick="actualizarEstado('${v.placa}','diagnostico')">→ Iniciar</button>`;
-    } else if (v.estado === 'diagnostico') {
-      acciones = `<button class="btn btn-sm btn-outline" onclick="actualizarEstado('${v.placa}','reparacion')">→ En reparación</button>
-                  <button class="btn btn-sm btn-wa" onclick="actualizarEstado('${v.placa}','listo')">✓ Listo</button>`;
-    } else if (v.estado === 'reparacion') {
-      acciones = `<button class="btn btn-sm btn-wa" onclick="actualizarEstado('${v.placa}','listo')">✓ Listo</button>`;
-    } else {
-      acciones = `<span style="font-size:12px;color:var(--green);font-weight:700">✓ Listo</span>`;
-    }
+    const ordenEstados = ['espera', 'diagnostico', 'reparacion', 'listo'];
+    const etiquetasBoton = { espera: 'Espera', diagnostico: 'Diagnóstico', reparacion: 'Reparación', listo: 'Listo' };
+    const acciones = ordenEstados.map(estado => {
+      const activo = v.estado === estado;
+      const claseBoton = activo ? 'btn-primary' : 'btn-outline';
+      return `<button class="btn btn-sm ${claseBoton}" ${activo ? 'disabled style="opacity:0.55; cursor:default"' : ''}
+                onclick="actualizarEstado('${v.placa}','${estado}')">${etiquetasBoton[estado]}</button>`;
+    }).join('');
 
     return `
       <div class="vehicle-card">
