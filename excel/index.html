@@ -757,6 +757,18 @@
       </div>
     </div>
 
+    <div class="form-grid" style="margin-bottom:16px; display:none" id="motivoPausaWrap">
+      <div class="form-group full">
+        <label>Motivo de la pausa</label>
+        <select id="motivoPausaSelect">
+          <option>Esperando repuesto</option>
+          <option>Esperando aprobación del cliente</option>
+          <option>Cambio de técnico</option>
+          <option>Otro</option>
+        </select>
+      </div>
+    </div>
+
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px">
       <button class="btn btn-primary" id="btnIniciar" onclick="rutinaIniciar()" style="flex:1">▶ Iniciar</button>
       <button class="btn btn-outline" id="btnPausar" onclick="rutinaPausar()" style="flex:1" disabled>⏸ Pausar</button>
@@ -1064,6 +1076,7 @@ function rutinaIniciar() {
   rutinaInicioTs = Date.now();
   rutinaSegundosPausados = 0;
   rutinaEventos = [];
+  document.getElementById('motivoPausaWrap').style.display = 'none';
   rutinaLog('Rutina "' + nombre + '" iniciada');
   rutinaSetBadge('status-diagnostico', 'En curso');
   document.getElementById('rutinaSelect').disabled = true;
@@ -1076,7 +1089,9 @@ function rutinaIniciar() {
 function rutinaPausar() {
   rutinaEstado = 'pausada';
   rutinaPausaTs = Date.now();
-  rutinaLog('Pausada (ej. esperando repuesto)');
+  document.getElementById('motivoPausaSelect').value = 'Esperando repuesto';
+  document.getElementById('motivoPausaWrap').style.display = 'grid';
+  rutinaLog('Pausada');
   rutinaSetBadge('status-espera', 'Pausada');
   document.getElementById('btnPausar').style.display = 'none';
   document.getElementById('btnReanudar').style.display = 'inline-flex';
@@ -1085,7 +1100,10 @@ function rutinaReanudar() {
   if (rutinaPausaTs) rutinaSegundosPausados += (Date.now() - rutinaPausaTs) / 1000;
   rutinaPausaTs = null;
   rutinaEstado = 'en_curso';
+  const motivo = document.getElementById('motivoPausaSelect').value;
+  rutinaLog('Motivo de la pausa: ' + motivo);
   rutinaLog('Reanudada');
+  document.getElementById('motivoPausaWrap').style.display = 'none';
   rutinaSetBadge('status-diagnostico', 'En curso');
   document.getElementById('btnPausar').style.display = 'inline-flex';
   document.getElementById('btnReanudar').style.display = 'none';
@@ -1093,6 +1111,9 @@ function rutinaReanudar() {
 function rutinaFinalizar() {
   if (rutinaEstado === 'pausada' && rutinaPausaTs) {
     rutinaSegundosPausados += (Date.now() - rutinaPausaTs) / 1000;
+    const motivo = document.getElementById('motivoPausaSelect').value;
+    rutinaLog('Motivo de la pausa: ' + motivo);
+    document.getElementById('motivoPausaWrap').style.display = 'none';
   }
   rutinaEstado = 'finalizada';
   rutinaActualizarTiempos();
